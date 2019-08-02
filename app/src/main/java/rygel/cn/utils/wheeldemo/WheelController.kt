@@ -1,5 +1,6 @@
 package rygel.cn.utils.wheeldemo
 
+import android.animation.Animator
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.graphics.*
@@ -23,36 +24,141 @@ class WheelController : View {
         private const val TAG = "WheelController"
     }
 
-    private var controllerMargin = 8F
-    private var outerRadius = 320F
-    private var innerRadius = 240F
-    private var bigCalibrationLength = 28F
-    private var smallCalibrationLength = 16F
-    private var calibrationMargin = 8F
-    private var bigCalibrationWidth = 6F
-    private var smallCalibrationWidth = 3F
+    var controllerMargin = 8F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var outerRadius = 320F
+        set(value) {
+            field = value
+            bgPaint.strokeWidth = outerRadius - innerRadius
+            fgPaint.strokeWidth = outerRadius - innerRadius
+            postInvalidate()
+        }
+    var innerRadius = 240F
+        set(value) {
+            field = value
+            bgPaint.strokeWidth = outerRadius - innerRadius
+            fgPaint.strokeWidth = outerRadius - innerRadius
+            postInvalidate()
+        }
+    var bigCalibrationLength = 28F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var smallCalibrationLength = 16F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var calibrationMargin = 8F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var bigCalibrationWidth = 6F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var smallCalibrationWidth = 3F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
 
-    private var calibrationTextSize = 36F
-    private var calibrationTextMargin = 24F
+    var calibrationTextSize = 36F
+        set(value) {
+            field = value
+            calibrationTextPaint.textSize = calibrationTextSize
+            postInvalidate()
+        }
+    var calibrationTextMargin = 24F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
 
-    private var textSize = 72F
+    var textSize = 72F
+        set(value) {
+            field = value
+            textPaint.textSize = textSize
+            postInvalidate()
+        }
 
-    private var bgColor = Color.parseColor("#EEEEEE")
-    private var maxColor = Color.parseColor("#FB8C00")
-    private var minColor = Color.parseColor("#FFF8E1")
+    var bgColor = Color.parseColor("#EEEEEE")
+        set(value) {
+            field = value
+            bgPaint.color = bgColor
+            postInvalidate()
+        }
+    var maxColor = Color.parseColor("#FB8C00")
+        set(value) {
+            field = value
+            fgPaint.shader = generateGradient()
+            postInvalidate()
+        }
+    var minColor = Color.parseColor("#FFF8E1")
+        set(value) {
+            field = value
+            fgPaint.shader = generateGradient()
+            postInvalidate()
+        }
 
-    private var textColor = Color.parseColor("#333333")
+    var textColor = Color.parseColor("#333333")
+        set(value) {
+            field = value
+            textPaint.color = textColor
+            calibrationTextPaint.color = textColor
+            postInvalidate()
+        }
 
-    private var startColor = Color.parseColor("#FF7043")
-    private var endColor = Color.parseColor("#FFFFFF")
+    var startColor = Color.parseColor("#FF7043")
+        set(value) {
+            field = value
+            startPaint.color = startColor
+            postInvalidate()
+        }
+    var endColor = Color.parseColor("#FFFFFF")
+        set(value) {
+            field = value
+            endPaint.color = endColor
+            postInvalidate()
+        }
 
-    private var calibrationColor = Color.parseColor("#8D8D8D")
+    var calibrationColor = Color.parseColor("#8D8D8D")
+        set(value) {
+            field = value
+            bCalibrationPaint.color = calibrationColor
+            sCalibrationPaint.color = calibrationColor
+            postInvalidate()
+        }
 
-    private var max = 100
-    private var min = 0
+    var max = 100
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var min = 0
+        set(value) {
+            field = value
+            postInvalidate()
+        }
 
-    private var smallStep = 7.2F
-    private var bigStep = 36F
+    var smallStep = 7.2F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+    var bigStep = 36F
+        set(value) {
+            field = value
+            postInvalidate()
+        }
+
+    var enable = true
 
     // 此处采用Float类型是为了滑动更加流畅，但是暴露给外面的依旧是Int类型
     private var curValue = 97F
@@ -79,10 +185,20 @@ class WheelController : View {
 
     private var animator : ObjectAnimator = ObjectAnimator.ofFloat(this, "curValue",0F)
 
+    private var canceled = false
+
     private var downTime = 0L
     private var tempPath = Path()
 
+    private var lastValue = curValue.toInt()
+
+    private var value2Set = curValue.toInt()
+
     private var listener : OnValueChangeLister? = null
+
+    private var skipCallback = false
+
+    private var touching = false
 
     init {
         bgPaint.color = bgColor
@@ -112,136 +228,27 @@ class WheelController : View {
         fgPaint.strokeWidth = outerRadius - innerRadius
         fgPaint.strokeCap = Paint.Cap.ROUND
 
+        animator.addListener(object : Animator.AnimatorListener{
+            override fun onAnimationEnd(animation: Animator?) {
+                canceled = true
+                setCurValue(value2Set)
+            }
+
+            override fun onAnimationRepeat(animation: Animator?) {
+                canceled = false
+            }
+
+            override fun onAnimationCancel(animation: Animator?) {
+                canceled = true
+                setCurValue(value2Set)
+            }
+
+            override fun onAnimationStart(animation: Animator?) {
+                canceled = false
+            }
+        })
         animator.duration = 300
         animator.setAutoCancel(true)
-    }
-
-    /************************************** setters *******************************************/
-    fun setControllerMargin(margin: Float) {
-        controllerMargin = margin
-        postInvalidate()
-    }
-
-    fun setOuterRadius(radius: Float) {
-        outerRadius = radius
-        bgPaint.strokeWidth = outerRadius - innerRadius
-        fgPaint.strokeWidth = outerRadius - innerRadius
-        postInvalidate()
-    }
-
-    fun setInnerRadius(radius: Float) {
-        innerRadius = radius
-        bgPaint.strokeWidth = outerRadius - innerRadius
-        fgPaint.strokeWidth = outerRadius - innerRadius
-        postInvalidate()
-    }
-
-    fun setSmallCalibrationLength(length: Float) {
-        smallCalibrationLength = length
-        postInvalidate()
-    }
-
-    fun setBigCalibrationLength(length: Float) {
-        bigCalibrationLength = length
-        postInvalidate()
-    }
-
-    fun setCalibrationMargin(margin: Float) {
-        calibrationMargin = margin
-        postInvalidate()
-    }
-
-    fun setBigCalibrationWidth(width: Float) {
-        bigCalibrationWidth = width
-        bCalibrationPaint.strokeWidth = bigCalibrationWidth
-        postInvalidate()
-    }
-
-    fun setSmallCalibrationWidth(width: Float) {
-        smallCalibrationWidth = width
-        sCalibrationPaint.strokeWidth = smallCalibrationWidth
-        postInvalidate()
-    }
-
-    fun setCalibrationTextSize(size: Float) {
-        calibrationTextSize = size
-        calibrationTextPaint.textSize = calibrationTextSize
-        postInvalidate()
-    }
-
-    fun setCalibrationTextMargin(margin: Float) {
-        calibrationTextMargin = margin
-        postInvalidate()
-    }
-
-    fun setTextSize(size: Float) {
-        textSize = size
-        textPaint.textSize = textSize
-        postInvalidate()
-    }
-
-    fun setBgColor(color: Int) {
-        bgColor = color
-        bgPaint.color = bgColor
-        postInvalidate()
-    }
-
-    fun setMaxColor(color: Int) {
-        maxColor = color
-        fgPaint.shader = generateGradient()
-        postInvalidate()
-    }
-
-    fun setMinColor(color: Int) {
-        minColor = color
-        fgPaint.shader = generateGradient()
-        postInvalidate()
-    }
-
-    fun setTextColor(color: Int) {
-        textColor = color
-        textPaint.color = textColor
-        calibrationTextPaint.color = textColor
-        postInvalidate()
-    }
-
-    fun setStartColor(color: Int) {
-        startColor = color
-        startPaint.color = startColor
-        postInvalidate()
-    }
-
-    fun setEndColor(color: Int) {
-        endColor = color
-        endPaint.color = endColor
-        postInvalidate()
-    }
-
-    fun setCalibrationColor(color: Int) {
-        calibrationColor = color
-        bCalibrationPaint.color = calibrationColor
-        sCalibrationPaint.color = calibrationColor
-        postInvalidate()
-    }
-
-    fun setMax(max: Int) {
-        this.max = max
-        postInvalidate()
-    }
-
-    fun setMin(min: Int) {
-        this.min = min
-        postInvalidate()
-    }
-
-    fun setSmallStep(step: Float) {
-        smallStep = step
-        postInvalidate()
-    }
-
-    fun setBigStep(step: Float) {
-        bigStep = step
-        postInvalidate()
     }
 
     fun setOnValueChangeListener(listener: OnValueChangeLister) {
@@ -249,22 +256,45 @@ class WheelController : View {
     }
 
     fun setCurValue(value : Int) {
+        if (touching) {
+            Log.e(TAG, "setting value while touching")
+            return
+        }
         if (!checkBounds(value)) {
             Log.e(TAG, "value : $value out of bound!")
             return
         }
         curValue = value.toFloat()
-        listener?.onValueChanged(curValue.toInt())
+        if (lastValue != curValue.toInt()) {
+            listener?.onValueChanged(curValue.toInt())
+            lastValue = curValue.toInt()
+        }
+        if (!skipCallback) {
+            Log.i(TAG, "skipped callback!")
+            listener?.onValueSelected(curValue.toInt())
+        }
+        Log.i(TAG, "selected : ${curValue.toInt()} ")
+        if (!canceled) {
+            animator.cancel()
+        }
+        skipCallback = false
         postInvalidate()
     }
 
     private fun setCurValue(value : Float) {
+        if (touching) {
+            Log.e(TAG, "setting value while touching")
+            return
+        }
         if (!checkBounds(value.toInt())) {
             Log.e(TAG, "value : $value out of bound!")
             return
         }
         curValue = value
-        listener?.onValueChanged(curValue.toInt())
+        if (lastValue != curValue.toInt()) {
+            listener?.onValueChanged(curValue.toInt())
+            lastValue = curValue.toInt()
+        }
         postInvalidate()
     }
 
@@ -272,32 +302,32 @@ class WheelController : View {
 
     fun obtainAttrs(attrs: AttributeSet?) {
         val array = context.obtainStyledAttributes(attrs, R.styleable.WheelController)
-        setControllerMargin(array.getDimension(R.styleable.WheelController_controllerMargin, controllerMargin))
-        setOuterRadius(array.getDimension(R.styleable.WheelController_outerRadius, outerRadius))
-        setInnerRadius(array.getDimension(R.styleable.WheelController_innerRadius, innerRadius))
-        setBigCalibrationLength(array.getDimension(R.styleable.WheelController_bigCalibrationLength, bigCalibrationLength))
-        setSmallCalibrationLength(array.getDimension(R.styleable.WheelController_smallCalibrationLength, smallCalibrationLength))
-        setCalibrationMargin(array.getDimension(R.styleable.WheelController_calibrationMargin, calibrationMargin))
-        setBigCalibrationWidth(array.getDimension(R.styleable.WheelController_bigCalibrationWidth, bigCalibrationWidth))
-        setSmallCalibrationWidth(array.getDimension(R.styleable.WheelController_smallCalibrationWidth, smallCalibrationWidth))
-        setCalibrationTextSize(array.getDimension(R.styleable.WheelController_calibrationTextSize, calibrationTextSize))
-        setCalibrationTextMargin(array.getDimension(R.styleable.WheelController_calibrationTextMargin, calibrationTextMargin))
-        setTextSize(array.getDimension(R.styleable.WheelController_valueTextSize, textSize))
+        controllerMargin = (array.getDimension(R.styleable.WheelController_controllerMargin, controllerMargin))
+        outerRadius = (array.getDimension(R.styleable.WheelController_outerRadius, outerRadius))
+        innerRadius = (array.getDimension(R.styleable.WheelController_innerRadius, innerRadius))
+        bigCalibrationLength = (array.getDimension(R.styleable.WheelController_bigCalibrationLength, bigCalibrationLength))
+        smallCalibrationLength = (array.getDimension(R.styleable.WheelController_smallCalibrationLength, smallCalibrationLength))
+        calibrationMargin = (array.getDimension(R.styleable.WheelController_calibrationMargin, calibrationMargin))
+        bigCalibrationWidth = (array.getDimension(R.styleable.WheelController_bigCalibrationWidth, bigCalibrationWidth))
+        smallCalibrationWidth = (array.getDimension(R.styleable.WheelController_smallCalibrationWidth, smallCalibrationWidth))
+        calibrationTextSize = (array.getDimension(R.styleable.WheelController_calibrationTextSize, calibrationTextSize))
+        calibrationTextMargin = (array.getDimension(R.styleable.WheelController_calibrationTextMargin, calibrationTextMargin))
+        textSize = (array.getDimension(R.styleable.WheelController_valueTextSize, textSize))
 
-        setBgColor(array.getColor(R.styleable.WheelController_bgColor, bgColor))
-        setMaxColor(array.getColor(R.styleable.WheelController_maxColor, maxColor))
-        setMinColor(array.getColor(R.styleable.WheelController_minColor, minColor))
-        setTextColor(array.getColor(R.styleable.WheelController_valueTextColor, textColor))
-        setStartColor(array.getColor(R.styleable.WheelController_startColor, startColor))
-        setEndColor(array.getColor(R.styleable.WheelController_endColor, endColor))
-        setCalibrationColor(array.getColor(R.styleable.WheelController_calibrationColor, calibrationColor))
+        bgColor = (array.getColor(R.styleable.WheelController_bgColor, bgColor))
+        maxColor = (array.getColor(R.styleable.WheelController_maxColor, maxColor))
+        minColor = (array.getColor(R.styleable.WheelController_minColor, minColor))
+        textColor = (array.getColor(R.styleable.WheelController_valueTextColor, textColor))
+        startColor = (array.getColor(R.styleable.WheelController_startColor, startColor))
+        endColor = (array.getColor(R.styleable.WheelController_endColor, endColor))
+        calibrationColor = (array.getColor(R.styleable.WheelController_calibrationColor, calibrationColor))
 
-        setMax(array.getInteger(R.styleable.WheelController_max, max))
-        setMin(array.getInteger(R.styleable.WheelController_min, min))
+        max = (array.getInteger(R.styleable.WheelController_max, max))
+        min = (array.getInteger(R.styleable.WheelController_min, min))
         setCurValue(array.getInteger(R.styleable.WheelController_curValue, curValue.toInt()))
 
-        setSmallStep(array.getFloat(R.styleable.WheelController_smallStep, smallStep))
-        setBigStep(array.getFloat(R.styleable.WheelController_bigStep, bigStep))
+        smallStep = (array.getFloat(R.styleable.WheelController_smallStep, smallStep))
+        bigStep = (array.getFloat(R.styleable.WheelController_bigStep, bigStep))
         array.recycle()
     }
 
@@ -357,8 +387,8 @@ class WheelController : View {
         // 绘制控制按钮
         canvas.drawCircle(outerRadius, bgPaint.strokeWidth / 2, bgPaint.strokeWidth / 2 - controllerMargin, startPaint)
         canvas.drawCircle(calculateXByAngleAndRadius(endAngle, innerRadius + bgPaint.strokeWidth / 2),
-            calculateYByAngleAndRadius(endAngle, innerRadius + bgPaint.strokeWidth / 2),
-            bgPaint.strokeWidth / 2 - controllerMargin, endPaint)
+                calculateYByAngleAndRadius(endAngle, innerRadius + bgPaint.strokeWidth / 2),
+                bgPaint.strokeWidth / 2 - controllerMargin, endPaint)
 
         textPaint.getTextBounds(curValue.toInt().toString(), 0, curValue.toInt().toString().length, textBound)
         canvas.drawText(curValue.toInt().toString(), outerRadius, outerRadius - textBound.centerY(), textPaint)
@@ -373,9 +403,9 @@ class WheelController : View {
             val str = (min + angle * (max - min) / 360F).toInt().toString()
             calibrationTextPaint.getTextBounds(str, 0, str.length, textBound)
             canvas.drawText(str,
-                calculateXByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin - calibrationTextMargin),
-                calculateYByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin - calibrationTextMargin) - textBound.centerY(),
-                calibrationTextPaint)
+                    calculateXByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin - calibrationTextMargin),
+                    calculateYByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin - calibrationTextMargin) - textBound.centerY(),
+                    calibrationTextPaint)
             angle += bigStep
         }
     }
@@ -388,9 +418,9 @@ class WheelController : View {
         var angle = 0F
         while (angle < 360F) {
             tempPath.moveTo(calculateXByAngleAndRadius(angle, innerRadius - calibrationMargin),
-                calculateYByAngleAndRadius(angle, innerRadius - calibrationMargin))
+                    calculateYByAngleAndRadius(angle, innerRadius - calibrationMargin))
             tempPath.lineTo(calculateXByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin),
-                calculateYByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin))
+                    calculateYByAngleAndRadius(angle, innerRadius - bigCalibrationLength - calibrationMargin))
             angle += bigStep
         }
         return tempPath
@@ -404,9 +434,9 @@ class WheelController : View {
         var angle = 0F
         while (angle < 360F) {
             tempPath.moveTo(calculateXByAngleAndRadius(angle, innerRadius - calibrationMargin),
-                calculateYByAngleAndRadius(angle, innerRadius - calibrationMargin))
+                    calculateYByAngleAndRadius(angle, innerRadius - calibrationMargin))
             tempPath.lineTo(calculateXByAngleAndRadius(angle, innerRadius - smallCalibrationLength - calibrationMargin),
-                calculateYByAngleAndRadius(angle, innerRadius - smallCalibrationLength - calibrationMargin))
+                    calculateYByAngleAndRadius(angle, innerRadius - smallCalibrationLength - calibrationMargin))
             angle += smallStep
         }
         return tempPath
@@ -421,6 +451,8 @@ class WheelController : View {
         Log.i(TAG, "action : ${event.action} location : (${event.x}, ${event.y}) time : ${event.downTime}")
         when (event.action) {
             ACTION_DOWN -> {
+                if (!enable) return false
+                touching = true
                 flag = checkIsInRing(event.x, event.y)
                 downTime = event.downTime
                 Log.i(TAG, "is in ring? $flag")
@@ -432,6 +464,7 @@ class WheelController : View {
                 }
             }
             ACTION_UP -> {
+                touching = false
                 smoothMoveToPosition(event.x, event.y)
             }
             else -> {
@@ -454,12 +487,24 @@ class WheelController : View {
      * 设置选中值，带动画
      */
     fun setCurValueWithAnim(value: Int) {
+        Log.i(TAG, "setting value with anim : $value ")
         if (!checkBounds(value)) {
             Log.e(TAG, "value : $value out of bound!")
             return
         }
+        if (!canceled) {
+            animator.cancel()
+        }
+        value2Set = value
         animator.setFloatValues(curValue, value.toFloat())
         animator.start()
+    }
+
+    /**
+     * 跳过一次回调
+     */
+    fun skipCallbackOnce() {
+        skipCallback = true
     }
 
     /**
@@ -476,7 +521,10 @@ class WheelController : View {
         val angle = calculateAngleByLocation(x, y)
         Log.i(TAG, "angle : $angle")
         curValue = min + (max - min) * angle / 360
-        listener?.onValueChanged(curValue.toInt())
+        if (lastValue != curValue.toInt()) {
+            listener?.onValueChanged(curValue.toInt())
+            lastValue = curValue.toInt()
+        }
         postInvalidate()
     }
 
@@ -534,6 +582,7 @@ class WheelController : View {
 
     interface OnValueChangeLister {
         fun onValueChanged(value: Int)
+        fun onValueSelected(value: Int)
     }
 
 }

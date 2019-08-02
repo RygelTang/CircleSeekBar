@@ -7,33 +7,10 @@
         android:layout_height="match_parent"
         tools:context=".MainActivity">
 
-    <!--app:bgColor="#FFF"-->
-    <!--app:curValue="30"-->
-    <!--app:maxColor="@color/colorPrimaryDark"-->
-    <!--app:minColor="@color/colorPrimary"-->
-    <!--app:max="120"-->
-    <!--app:min="0"-->
-    <!--app:startColor="@color/colorPrimaryDark"-->
-    <!--app:endColor="#FFF"-->
-    <!--app:controllerMargin="2dp"-->
-    <!--app:outerRadius="120dp"-->
-    <!--app:innerRadius="96dp"-->
-    <!--app:smallStep="6"-->
-    <!--app:bigStep="30"-->
-    <!--app:calibrationColor="#AAA"-->
-    <!--app:bigCalibrationLength="4dp"-->
-    <!--app:smallCalibrationLength="3dp"-->
-    <!--app:calibrationMargin="1dp"-->
-    <!--app:bigCalibrationWidth="1dp"-->
-    <!--app:smallCalibrationWidth="0.5dp"-->
-    <!--app:calibrationTextSize="16dp"-->
-    <!--app:valueTextSize="0dp"-->
-    <!--app:calibrationTextMargin="5dp"-->
-
     <rygel.cn.utils.wheeldemo.WheelController
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:curValue="10"
+            app:curValue="30"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
@@ -59,5 +36,17 @@
             android:layout_marginEnd="8dp"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginStart="8dp"/>
+
+    <Button android:id="@+id/btnSkipCallback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            app:layout_constraintTop_toBottomOf="@+id/btnAnim"
+            android:text="skip callback"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            android:layout_marginStart="8dp"
+            app:layout_constraintHorizontal_bias="0.498"/>
 
 </android.support.constraint.ConstraintLayout>
